@@ -5,9 +5,21 @@ import Pusher from 'pusher-js';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const mapStyles = { width: '100%', height: '100%' };
+const apiKey = import.meta.env.VITE_REACT_APP_GOOGLE_MAPS_API_KEY
+const pusherKey = import.meta.env.VITE_REACT_APP_PUSHER_KEY
+const pusherCluster = import.meta.env.VITE_REACT_APP_PUSHER_CLUSTER
+
+console.log(`This is the Api key${apiKey}`)
+
+const mapStyles = { width: '100px', height: '400px', marginTop: '-50px' };
+const containerStyle = {
+    position: "relative",
+    width: "50%",
+    height: "400px",
+    marginTop: "5rem"
+  };
 const markerStyle = { height: '50px', width: '50px', marginTop: '-50px' };
-const imgStyle = { height: '100%' };
+const imgStyle = { height: '75%' };
 
 const Marker = ({ title }) => (
   <div style={markerStyle}>
@@ -28,10 +40,9 @@ class Map extends Component {
   }
 
   componentDidMount() {
-    const pusher = new Pusher(process.env.REACT_APP_PUSHER_KEY, {
-      authEndpoint: "http://localhost:3128/pusher/auth",
-      cluster: process.env.REACT_APP_PUSHER_CLUSTER,
-      encrypted: true
+    const pusher = new Pusher(pusherKey, { 
+      authEndpoint: "http://localhost:3001/pusher/auth",
+      cluster:  "us3" ,
     });
 
     this.presenceChannel = pusher.subscribe('presence-channel');
@@ -86,7 +97,7 @@ class Map extends Component {
               [prevState.current_user]: location
             }
           }), () => {
-            axios.post("http://localhost:3128/update-location", {
+            axios.post("http://localhost:3001/update-location", {
               username: this.state.current_user,
               location: location
             })
@@ -115,7 +126,7 @@ class Map extends Component {
   }
 
   render() {
-    console.log(this.state.locations.lat)
+    console.log(this.state.locations)
     let locationMarkers = Object.keys(this.state.locations).map((username, id) => (
       <Marker
         key={id}
@@ -127,14 +138,17 @@ class Map extends Component {
 
     return (
       <div>
+        <div className='maps_container' style={containerStyle}>
         <GoogleMap
           style={mapStyles}
-          bootstrapURLKeys={{ key: process.env.REACT_APP_GOOGLE_MAPS_API_KEY }}
+          bootstrapURLKeys={{ key:apiKey}}
+          containerStyle={containerStyle}
           center={this.state.center}
           zoom={14}
         >
           {locationMarkers}
         </GoogleMap>
+        </div>
         <ToastContainer />
       </div>
     );

@@ -40,3 +40,26 @@
 .read-the-docs {
   color: #888;
 }
+
+@media (min-width: 2400px) {
+  .navbar-expand-lg {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navbar-expand-lg .navbar-nav {
+    flex-direction: row;
+  }
+
+  .navbar-expand-lg .navbar-toggler {
+    display: block;
+  }
+
+  .navbar-expand-lg .navbar-collapse {
+    display: none;
+  }
+
+  .navbar-expand-lg .navbar-collapse.show {
+    display: block;
+  }
+}
