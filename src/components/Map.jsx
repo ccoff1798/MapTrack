@@ -1,13 +1,21 @@
 import React, { Component } from 'react';
 import GoogleMap from 'google-map-react';
 import axios from 'axios';
-import Pusher from 'pusher-js';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const mapStyles = { width: '100%', height: '100%' };
+const apiKey = import.meta.env.VITE_REACT_APP_GOOGLE_MAPS_API_KEY;
+console.log(`This is the Api key${apiKey}`);
+
+const mapStyles = { width: '100px', height: '400px', marginTop: '-50px' };
+const containerStyle = {
+    position: "relative",
+    width: "50%",
+    height: "400px",
+    marginTop: "5rem"
+};
 const markerStyle = { height: '50px', width: '50px', marginTop: '-50px' };
-const imgStyle = { height: '100%' };
+const imgStyle = { height: '75%' };
 
 const Marker = ({ title }) => (
   <div style={markerStyle}>
@@ -22,59 +30,11 @@ class Map extends Component {
     this.state = {
       center: { lat: 5.6219868, lng: -0.23223 },
       locations: {},
-      users_online: [],
       current_user: ''
     };
   }
 
   componentDidMount() {
-    const pusher = new Pusher(process.env.REACT_APP_PUSHER_KEY, {
-      authEndpoint: "http://localhost:3128/pusher/auth",
-      cluster: process.env.REACT_APP_PUSHER_CLUSTER,
-      encrypted: true
-    });
-
-    this.presenceChannel = pusher.subscribe('presence-channel');
-
-    this.presenceChannel.bind('pusher:subscription_succeeded', members => {
-      this.setState({
-        users_online: members.members,
-        current_user: members.myID
-      });
-      this.getLocation();
-      this.notify();
-    });
-
-    this.presenceChannel.bind('location-update', body => {
-      this.setState((prevState) => {
-        const newState = { ...prevState };
-        newState.locations[body.username] = body.location;
-        return newState;
-      });
-    });
-
-    this.presenceChannel.bind('pusher:member_removed', member => {
-      this.setState((prevState) => {
-        const newState = { ...prevState };
-        delete newState.locations[member.id];
-        delete newState.users_online[member.id];
-        return newState;
-      });
-      this.notify();
-    });
-  }
-
-  notify = () => toast(`Users online : ${Object.keys(this.state.users_online).length}`, {
-    position: "top-right",
-    autoClose: 3000,
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-    type: 'info'
-  });
-
-  getLocation = () => {
     if ("geolocation" in navigator) {
       navigator.geolocation.watchPosition(
         position => {
@@ -86,7 +46,7 @@ class Map extends Component {
               [prevState.current_user]: location
             }
           }), () => {
-            axios.post("http://localhost:3128/update-location", {
+            axios.post("http://localhost:3001/update-location", {
               username: this.state.current_user,
               location: location
             })
@@ -115,26 +75,30 @@ class Map extends Component {
   }
 
   render() {
-    console.log(this.state.locations.lat)
+    console.log(`Location is ${this.state.locations}`);
+    console.log(`Location is ${JSON.stringify(this.state.locations)}`);
     let locationMarkers = Object.keys(this.state.locations).map((username, id) => (
       <Marker
         key={id}
         title={username === this.state.current_user ? 'My location' : `${username}'s location`}
-        lat={this.state.locations.lat}
-        lng={this.state.locations.lng}
+        lat={this.state.locations[username].lat}
+        lng={this.state.locations[username].lng}
       />
     ));
 
     return (
       <div>
+        <div className='maps_container' style={containerStyle}>
         <GoogleMap
           style={mapStyles}
-          bootstrapURLKeys={{ key: process.env.REACT_APP_GOOGLE_MAPS_API_KEY }}
+          bootstrapURLKeys={{ key:apiKey}}
+          containerStyle={containerStyle}
           center={this.state.center}
           zoom={14}
         >
           {locationMarkers}
         </GoogleMap>
+        </div>
         <ToastContainer />
       </div>
     );
